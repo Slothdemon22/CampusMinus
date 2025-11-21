@@ -1,0 +1,235 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { toast } from 'sonner';
+import axios from 'axios';
+import DashboardNav from '@/components/DashboardNav';
+import Image from 'next/image';
+import QuestionModal from '@/components/QuestionModal';
+
+interface Question {
+  id: string;
+  title: string;
+  type: string;
+  description: string;
+  images: string[];
+  userId: string;
+  createdAt: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+}
+
+export default function QuestionsPage() {
+  const router = useRouter();
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchQuestions();
+    fetchCurrentUser();
+  }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const { data } = await axios.get('/api/auth/me');
+      if (data.user) {
+        setCurrentUser(data.user.id);
+      }
+    } catch (error) {
+      // Not logged in, that's okay - questions are public
+      setCurrentUser(null);
+    }
+  };
+
+  const fetchQuestions = async () => {
+    try {
+      const { data } = await axios.get('/api/questions');
+      setQuestions(data.questions || []);
+    } catch (error: any) {
+      toast.error('Failed to load questions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <DashboardNav />
+        <div className="flex items-center justify-center h-96">
+          <div className="text-gray-600">Loading questions...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <DashboardNav />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 md:mb-12">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Community Questions</h1>
+            <p className="text-gray-600 text-lg">Browse questions from the community</p>
+          </div>
+          <div className="flex gap-3">
+            {currentUser && (
+              <>
+                <Link
+                  href="/my-questions"
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                >
+                  My Questions
+                </Link>
+                <Link
+                  href="/questions/new"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Ask Question
+                  </span>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+
+        {questions.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 md:p-16 text-center">
+            <div className="text-gray-400 mb-6">
+              <svg className="w-20 h-20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">No questions yet</h3>
+            <p className="text-gray-600 mb-8 text-lg">Be the first to ask a question and help build our community</p>
+            {currentUser && (
+              <Link
+                href="/questions/new"
+                className="inline-block bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl"
+              >
+                Ask Your First Question
+              </Link>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-6">
+            {questions.map((question) => (
+              <div
+                key={question.id}
+                onClick={() => {
+                  setSelectedQuestion(question);
+                  setIsModalOpen(true);
+                }}
+                className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer"
+              >
+                <div className="flex flex-col md:flex-row">
+                  {/* Left Side - Content (50%) */}
+                  <div className="w-full md:w-1/2 p-6 md:p-8">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3 flex-wrap">
+                        <span className="px-4 py-1.5 bg-blue-600 text-white rounded-full text-sm font-semibold">
+                          {question.type}
+                        </span>
+                        <span className="text-sm text-gray-500 flex items-center gap-1">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          {question.user.name || question.user.email.split('@')[0]}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                      {question.title}
+                    </h2>
+                    
+                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed mb-6">
+                      {question.description}
+                    </p>
+
+                    <div className="flex items-center gap-2 text-sm text-gray-500 pt-4 border-t border-gray-100">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <span>Posted {new Date(question.createdAt).toLocaleDateString('en-US', { 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</span>
+                    </div>
+                  </div>
+
+                  {/* Right Side - Images (50%) */}
+                  <div className="w-full md:w-1/2 p-6 md:p-8 bg-gray-50 border-t md:border-t-0 md:border-l border-gray-200">
+                    {question.images.length > 0 ? (
+                      <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {question.images.slice(0, 2).map((url, index) => (
+                            <div 
+                              key={index} 
+                              className="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-200 hover:border-blue-400 transition-colors group cursor-pointer shadow-sm"
+                            >
+                              <Image
+                                src={url}
+                                alt={`Question image ${index + 1}`}
+                                width={400}
+                                height={400}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors" />
+                            </div>
+                          ))}
+                        </div>
+                        {question.images.length > 2 && (
+                          <div className="mt-4 text-center">
+                            <span className="text-sm text-gray-600 font-medium">
+                              +{question.images.length - 2} more image{question.images.length - 2 > 1 ? 's' : ''}
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-full min-h-[200px] text-gray-400">
+                        <div className="text-center">
+                          <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          <p className="text-sm">No images</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <QuestionModal
+        question={selectedQuestion}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedQuestion(null);
+        }}
+        canDelete={false}
+      />
+    </div>
+  );
+}
+

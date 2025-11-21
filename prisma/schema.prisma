@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String     @id @default(uuid())
+  email     String     @unique
+  password  String
+  name      String?
+  role      UserRole   @default(STUDENT)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  tasks     Task[]
+  questions Question[]
+  answers   Answer[]
+
+  @@map("users")
+}
+
+model Task {
+  id          String    @id @default(uuid())
+  title       String
+  content     String    @db.Text
+  completed   Boolean   @default(false)
+  deadline    DateTime?
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("tasks")
+}
+
+model Question {
+  id          String   @id @default(uuid())
+  title       String
+  type        String
+  description String   @db.Text
+  images      String[] // Array of image URLs
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  answers     Answer[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("questions")
+}
+
+model Answer {
+  id          String   @id @default(uuid())
+  description String   @db.Text
+  images      String[] // Array of image URLs
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("answers")
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
