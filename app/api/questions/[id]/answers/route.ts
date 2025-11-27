@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getPrismaClient } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 
 // GET - Get all answers for a question
@@ -98,11 +99,17 @@ export async function POST(
 
     // Use raw query to insert answer
     const answerId = randomUUID();
-    const imagesJson = JSON.stringify(images || []);
+    const imageList = Array.isArray(images)
+      ? images.filter((url: unknown) => typeof url === 'string' && url.trim().length > 0)
+      : [];
+    const imagesSql =
+      imageList.length > 0
+        ? Prisma.sql`ARRAY[${Prisma.join(imageList.map((url) => Prisma.sql`${url}`))}]::text[]`
+        : Prisma.sql`ARRAY[]::text[]`;
     
     await prisma.$executeRaw`
       INSERT INTO answers (id, description, images, "questionId", "userId", "createdAt", "updatedAt")
-      VALUES (${answerId}, ${description.trim()}, ${imagesJson}::jsonb, ${id}, ${user.id}, NOW(), NOW())
+      VALUES (${answerId}, ${description.trim()}, ${imagesSql}, ${id}, ${user.id}, NOW(), NOW())
     `;
     
     // Fetch the created answer with user info

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import DashboardNav from '@/components/DashboardNav';
 import Image from 'next/image';
+import RichTextEditor from '@/components/RichTextEditor';
 
 const QUESTION_TYPES = [
   'Mathematics',
@@ -88,9 +89,16 @@ export default function NewQuestionPage() {
     setImageFiles(imageFiles.filter((_, i) => i !== index));
   };
 
+  const getPlainText = (html: string) =>
+    html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !type.trim() || !description.trim()) {
+    if (!title.trim() || !type.trim() || !getPlainText(description)) {
       toast.error('Title, type, and description are required');
       return;
     }
@@ -178,12 +186,9 @@ export default function NewQuestionPage() {
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Description <span className="text-red-500">*</span>
             </label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              rows={6}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400 resize-none"
+            <RichTextEditor
+              content={description}
+              onChange={setDescription}
               placeholder="Describe your question in detail..."
             />
           </div>

@@ -214,9 +214,10 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
                                         </p>
                                       </div>
                                     </div>
-                                    <p className="text-gray-700 whitespace-pre-wrap text-sm mb-3">
-                                      {answer.description}
-                                    </p>
+                                    <div
+                                      className="text-gray-700 text-sm mb-3 prose prose-sm max-w-none prose-p:text-gray-700"
+                                      dangerouslySetInnerHTML={{ __html: answer.description }}
+                                    />
                                     {answer.images.length > 0 && (
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
                                         {answer.images.map((url, index) => (
@@ -243,9 +244,10 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
                         </div>
                       </div>
                     ) : (
-                      <p className="text-gray-600 text-sm line-clamp-2">
-                        {question.description}
-                      </p>
+                      <div
+                        className="text-gray-600 text-sm line-clamp-2 prose prose-sm max-w-none prose-p:text-gray-700"
+                        dangerouslySetInnerHTML={{ __html: question.description }}
+                      />
                     )}
                   </div>
                   <button

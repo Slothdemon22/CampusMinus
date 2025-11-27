@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
 import axios from 'axios';
+import RichTextEditor from './RichTextEditor';
 
 interface Question {
   id: string;
@@ -105,8 +106,15 @@ export default function QuestionModal({
     setAnswerImageFiles(answerImageFiles.filter((_, i) => i !== index));
   };
 
+  const getPlainText = (html: string) =>
+    html
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
   const handleSubmitAnswer = async () => {
-    if (!question || !answerDescription.trim()) {
+    if (!question || !getPlainText(answerDescription)) {
       toast.error('Please provide an answer description');
       return;
     }
@@ -210,9 +218,10 @@ export default function QuestionModal({
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mb-6">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
-            <p className="text-gray-700 whitespace-pre-wrap leading-relaxed">
-              {question.description}
-            </p>
+            <div
+              className="prose prose-blue max-w-none text-gray-700 leading-relaxed prose-headings:text-gray-900 prose-p:text-gray-700 prose-strong:text-gray-900"
+              dangerouslySetInnerHTML={{ __html: question.description }}
+            />
           </div>
 
           {question.images.length > 0 && (
@@ -274,13 +283,13 @@ export default function QuestionModal({
           {/* Answer Form */}
           {showAnswerForm && (
             <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-              <textarea
-                value={answerDescription}
-                onChange={(e) => setAnswerDescription(e.target.value)}
-                placeholder="Write your answer..."
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all text-gray-900 placeholder:text-gray-400 resize-none mb-4"
-              />
+              <div className="mb-4">
+                <RichTextEditor
+                  content={answerDescription}
+                  onChange={setAnswerDescription}
+                  placeholder="Write your answer..."
+                />
+              </div>
               
               <div className="mb-4">
                 <input
@@ -359,7 +368,10 @@ export default function QuestionModal({
                       </p>
                     </div>
                   </div>
-                  <p className="text-gray-700 whitespace-pre-wrap mb-3">{answer.description}</p>
+                  <div
+                    className="text-gray-700 prose prose-sm max-w-none prose-p:text-gray-700 prose-strong:text-gray-900 mb-3"
+                    dangerouslySetInnerHTML={{ __html: answer.description }}
+                  />
                   {answer.images.length > 0 && (
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">
                       {answer.images.map((url, index) => (

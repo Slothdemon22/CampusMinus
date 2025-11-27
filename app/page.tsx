@@ -10,6 +10,7 @@ export default async function Home() {
       redirect('/admin/dashboard');
     } else {
       redirect('/dashboard');
+    
     }
   }
 

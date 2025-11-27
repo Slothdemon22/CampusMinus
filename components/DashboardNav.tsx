@@ -16,6 +16,7 @@ export default function DashboardNav() {
         { href: '/tasks', label: 'Tasks', icon: '✓' },
         { href: '/questions', label: 'Community', icon: '❓' },
         { href: '/my-questions', label: 'My Questions', icon: '📝' },
+        { href: '/notes', label: 'Notes', icon: '🗒️' },
       ];
 
   return (

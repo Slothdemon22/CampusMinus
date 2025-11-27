@@ -157,9 +157,10 @@ export default function QuestionsPage() {
                       {question.title}
                     </h2>
                     
-                    <p className="text-gray-700 whitespace-pre-wrap leading-relaxed mb-6">
-                      {question.description}
-                    </p>
+                    <div
+                      className="text-gray-700 leading-relaxed mb-6 prose prose-sm max-w-none prose-p:text-gray-700 prose-strong:text-gray-900 line-clamp-5"
+                      dangerouslySetInnerHTML={{ __html: question.description }}
+                    />
 
                     <div className="flex items-center gap-2 text-sm text-gray-500 pt-4 border-t border-gray-100">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
