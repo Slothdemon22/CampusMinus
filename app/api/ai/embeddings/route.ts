@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Gemini text-embedding-004 model produces 768-dimensional vectors
 const EMBEDDING_DIMENSIONS = 768;
@@ -24,57 +23,38 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Use the embedding model
-    // Note: Gemini embedding API might use a different method
-    // Try embedContent first, if that doesn't work, we'll use the REST API directly
-    try {
-      const model = genAI.getGenerativeModel({ 
-        model: 'text-embedding-004' 
-      });
+    // Use Gemini REST API for embeddings (text-embedding-004)
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'models/text-embedding-004',
+          content: {
+            parts: [{ text: text.trim() }]
+          }
+        }),
+      }
+    );
 
-      // Generate embedding using embedContent
-      const result = await model.embedContent(text.trim());
-      
-      // The response structure may vary, try different access patterns
-      let embedding: number[] | null = null;
-      
-      if (result.embedding) {
-        if (Array.isArray(result.embedding)) {
-          embedding = result.embedding;
-        } else if (result.embedding.values) {
-          embedding = result.embedding.values;
-        } else if (typeof result.embedding === 'object' && 'values' in result.embedding) {
-          embedding = (result.embedding as any).values;
-        }
-      }
-      
-      // If embedContent doesn't work, try REST API directly
-      if (!embedding || !Array.isArray(embedding)) {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'models/text-embedding-004',
-            content: { parts: [{ text: text.trim() }] }
-          }),
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          embedding = data.embedding?.values || data.embedding;
-        }
-      }
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', errorText);
+      throw new Error(`Gemini API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    const embedding = data.embedding?.values || data.embedding;
 
     if (!embedding || !Array.isArray(embedding)) {
       return NextResponse.json(
-        { error: 'Invalid embedding response' },
+        { error: 'Invalid embedding response from API' },
         { status: 500 }
       );
     }
 
-    // Ensure we have the right dimensions
+    // Ensure we have the right dimensions (768 for text-embedding-004)
     if (embedding.length !== EMBEDDING_DIMENSIONS) {
       console.warn(`Expected ${EMBEDDING_DIMENSIONS} dimensions, got ${embedding.length}`);
     }
@@ -94,4 +74,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

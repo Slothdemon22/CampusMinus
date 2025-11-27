@@ -31,6 +31,8 @@ export default function QuestionsPage() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetchQuestions();
@@ -60,6 +62,32 @@ export default function QuestionsPage() {
     }
   };
 
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      fetchQuestions();
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const { data } = await axios.post('/api/questions/search', {
+        query: searchQuery.trim(),
+        limit: 20,
+      });
+      setQuestions(data.questions || []);
+      if (data.questions && data.questions.length > 0) {
+        toast.success(`Found ${data.questions.length} similar questions`);
+      } else {
+        toast.info('No similar questions found');
+      }
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Search failed');
+      fetchQuestions(); // Fallback to all questions
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -81,6 +109,36 @@ export default function QuestionsPage() {
           <div>
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Community Questions</h1>
             <p className="text-gray-600 text-lg">Browse questions from the community</p>
+          </div>
+          
+          {/* Search Bar */}
+          <div className="w-full sm:w-auto flex gap-2 mb-4 sm:mb-0">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Search questions by description..."
+              className="flex-1 sm:w-64 px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 bg-white"
+            />
+            <button
+              onClick={handleSearch}
+              disabled={isSearching}
+              className="px-6 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSearching ? 'Searching...' : 'Search'}
+            </button>
+            {searchQuery && (
+              <button
+                onClick={() => {
+                  setSearchQuery('');
+                  fetchQuestions();
+                }}
+                className="px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+              >
+                Clear
+              </button>
+            )}
           </div>
           <div className="flex gap-3">
             {currentUser && (
