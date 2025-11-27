@@ -10,6 +10,7 @@
     "init-admin": "tsx scripts/init-admin.ts"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
     "@supabase/supabase-js": "^2.84.0",

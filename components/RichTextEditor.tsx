@@ -12,7 +12,11 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-const extensions = [StarterKit];
+const extensions = [
+  StarterKit.configure({
+    codeBlock: true,
+  }),
+];
 
 function MenuBar({ editor }: { editor: Editor }) {
   const editorState = useEditorState({
@@ -38,6 +42,7 @@ function MenuBar({ editor }: { editor: Editor }) {
         isBulletList: ctx.editor.isActive('bulletList') ?? false,
         isOrderedList: ctx.editor.isActive('orderedList') ?? false,
         isCodeBlock: ctx.editor.isActive('codeBlock') ?? false,
+        canCodeBlock: ctx.editor.can().chain().toggleCodeBlock().run() ?? false,
         isBlockquote: ctx.editor.isActive('blockquote') ?? false,
         canUndo: ctx.editor.can().chain().undo().run() ?? false,
         canRedo: ctx.editor.can().chain().redo().run() ?? false,
@@ -189,7 +194,9 @@ function MenuBar({ editor }: { editor: Editor }) {
           Ordered list
         </button>
         <button
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          onClick={() => {
+            editor.chain().focus().toggleCodeBlock().run();
+          }}
           className={`px-2.5 py-1.5 rounded text-xs font-medium border ${
             editorState.isCodeBlock
               ? 'bg-blue-600 text-white border-blue-600'
@@ -260,11 +267,18 @@ export default function RichTextEditor({ content, onChange, placeholder = 'Start
     editorProps: {
       attributes: {
         class:
-          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[320px] p-4 text-gray-900 prose-headings:text-gray-900 prose-p:text-gray-900 prose-strong:text-gray-900 prose-ul:text-gray-900 prose-ol:text-gray-900 prose-li:text-gray-900',
+          'prose prose-sm sm:prose lg:prose-lg xl:prose-2xl mx-auto focus:outline-none min-h-[320px] p-4 text-gray-900 prose-headings:text-gray-900 prose-p:text-gray-900 prose-strong:text-gray-900 prose-ul:text-gray-900 prose-ol:text-gray-900 prose-li:text-gray-900 prose-code:text-red-600 prose-pre:bg-slate-800 prose-pre:text-slate-100',
       },
     },
     immediatelyRender: false,
   });
+
+  // Update editor content when prop changes (e.g., from AI generation)
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   if (!mounted || !editor) {
     return (

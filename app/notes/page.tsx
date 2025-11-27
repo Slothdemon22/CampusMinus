@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import DashboardNav from '@/components/DashboardNav';
 import RichTextEditor from '@/components/RichTextEditor';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 interface Note {
   id: string;
@@ -28,6 +29,9 @@ export default function NotesPage() {
   const [content, setContent] = useState('');
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
+  const [showAiPanel, setShowAiPanel] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
@@ -50,6 +54,36 @@ export default function NotesPage() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
   }, [notes, hydrated]);
 
+  const handleGenerateAiNote = async () => {
+    if (!aiPrompt.trim()) {
+      toast.error('Please describe what you want the AI to generate');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const { data } = await axios.post('/api/ai/notes', {
+        prompt: aiPrompt.trim(),
+        subject: title.trim() || undefined,
+      });
+
+      if (!data?.content) {
+        throw new Error('Empty AI response');
+      }
+
+      // Set content and clear prompt
+      setContent(data.content);
+      setAiPrompt('');
+      toast.success('AI note generated successfully!');
+      setShowAiPanel(false);
+    } catch (error: any) {
+      console.error('AI notes error', error);
+      toast.error(error?.response?.data?.error || 'Failed to generate notes');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   const handleSaveNote = () => {
     if (!title.trim()) {
       toast.error('Please provide a note title');
@@ -69,6 +103,9 @@ export default function NotesPage() {
       createdAt: now,
       updatedAt: now,
     };
+
+    // Log the note in JSON format to console
+    console.log('Saved Note:', JSON.stringify(newNote, null, 2));
 
     setNotes((prev) => [newNote, ...prev]);
     setTitle('');
@@ -97,7 +134,7 @@ export default function NotesPage() {
     <div className="min-h-screen bg-gray-50">
       <DashboardNav />
 
-      <div className="w-full px-4 sm:px-6 lg:px-16 xl:px-24 py-8 md:py-12">
+      <div className="w-full px-4 sm:px-6 lg:px-16 xl:px-24 py-8 md:py-12 relative">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <div>
             <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider">Quick Notes</p>
@@ -228,6 +265,55 @@ export default function NotesPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Floating AI Notes Button + Panel */}
+      <div className="fixed bottom-6 right-6 z-40">
+        {/* Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setShowAiPanel((prev) => !prev)}
+          className="flex items-center gap-2 px-4 py-3 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
+        >
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 border border-white/20 text-xs">
+            AI
+          </span>
+          <span>Generate notes</span>
+        </button>
+
+        {/* Slide-up Panel */}
+        {showAiPanel && (
+          <div className="mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 p-4">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-semibold text-gray-900">Generate with AI</h3>
+              <button
+                type="button"
+                onClick={() => setShowAiPanel(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-gray-500 mb-3">
+              Describe what you want (topic, level, style). AI will replace the current content.
+            </p>
+            <textarea
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              rows={3}
+              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 resize-none mb-3"
+              placeholder="e.g. Short revision notes for Quantum Physics basics"
+            />
+            <button
+              type="button"
+              onClick={handleGenerateAiNote}
+              disabled={aiLoading}
+              className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-md hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {aiLoading ? 'Generating…' : 'Generate notes'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
