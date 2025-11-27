@@ -14,8 +14,6 @@ interface Note {
   updatedAt: string;
 }
 
-const STORAGE_KEY = 'ragra_notes';
-
 const getPlainText = (html: string) =>
   html
     .replace(/<[^>]*>/g, ' ')
@@ -28,31 +26,32 @@ export default function NotesPage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const [hydrated, setHydrated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
 
+  // Fetch notes from API
   useEffect(() => {
-    setHydrated(true);
+    fetchNotes();
   }, []);
 
-  useEffect(() => {
-    if (!hydrated) return;
+  const fetchNotes = async () => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        setNotes(JSON.parse(saved));
+      setLoading(true);
+      const { data } = await axios.get('/api/notes');
+      setNotes(data.notes || []);
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error('Please login to view your notes');
+      } else {
+        toast.error('Failed to load notes');
       }
-    } catch (error) {
-      console.error('Failed to load notes from storage', error);
+    } finally {
+      setLoading(false);
     }
-  }, [hydrated]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
-  }, [notes, hydrated]);
+  };
 
   const handleGenerateAiNote = async () => {
     if (!aiPrompt.trim()) {
@@ -84,7 +83,7 @@ export default function NotesPage() {
     }
   };
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!title.trim()) {
       toast.error('Please provide a note title');
       return;
@@ -95,30 +94,40 @@ export default function NotesPage() {
       return;
     }
 
-    const now = new Date().toISOString();
-    const newNote: Note = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      content,
-      createdAt: now,
-      updatedAt: now,
-    };
+    setSaving(true);
+    try {
+      const { data } = await axios.post('/api/notes', {
+        title: title.trim(),
+        content,
+      });
 
-    // Log the note in JSON format to console
-    console.log('Saved Note:', JSON.stringify(newNote, null, 2));
-
-    setNotes((prev) => [newNote, ...prev]);
-    setTitle('');
-    setContent('');
-    toast.success('Note saved locally');
+      // Note is already logged in the API route
+      setNotes((prev) => [data.note, ...prev]);
+      setTitle('');
+      setContent('');
+      toast.success('Note saved successfully');
+    } catch (error: any) {
+      if (error.response?.status === 401) {
+        toast.error('Please login to save notes');
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to save note');
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleDeleteNote = (id: string) => {
-    setNotes((prev) => prev.filter((note) => note.id !== id));
-    if (selectedNoteId === id) {
-      setSelectedNoteId(null);
+  const handleDeleteNote = async (id: string) => {
+    try {
+      await axios.delete(`/api/notes/${id}`);
+      setNotes((prev) => prev.filter((note) => note.id !== id));
+      if (selectedNoteId === id) {
+        setSelectedNoteId(null);
+      }
+      toast.success('Note deleted');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete note');
     }
-    toast.success('Note deleted');
   };
 
   const formattedNotes = useMemo(
@@ -191,22 +200,27 @@ export default function NotesPage() {
                   <button
                     type="button"
                     onClick={handleSaveNote}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-md hover:bg-blue-700 transition-colors"
+                    disabled={saving}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Save Note
+                    {saving ? 'Saving...' : 'Save Note'}
                   </button>
                 </div>
               </div>
 
               <p className="text-xs text-gray-500 mt-4">
-                Notes are stored only on this device using local storage. Clearing browser data will remove them.
+                Notes are stored in the database and synced across your devices.
               </p>
             </div>
           </div>
 
           {/* Notes List - full width below editor */}
           <div className="space-y-4">
-            {formattedNotes.length === 0 ? (
+            {loading ? (
+              <div className="bg-white rounded-2xl border border-dashed border-gray-300 px-8 py-12 text-center text-gray-500 min-h-[50vh] flex items-center justify-center">
+                <p className="text-lg">Loading notes...</p>
+              </div>
+            ) : formattedNotes.length === 0 ? (
               <div className="bg-white rounded-2xl border border-dashed border-gray-300 px-8 py-12 text-center text-gray-500 min-h-[50vh] flex items-center justify-center">
                 <p className="text-lg max-w-xl">
                   No notes yet. Start by writing your first one on the left and it will appear here, filling your

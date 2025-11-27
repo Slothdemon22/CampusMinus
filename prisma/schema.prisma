@@ -17,6 +17,7 @@ model User {
   tasks     Task[]
   questions Question[]
   answers   Answer[]
+  notes     Note[]
 
   @@map("users")
 }
@@ -62,6 +63,18 @@ model Answer {
   updatedAt   DateTime @updatedAt
 
   @@map("answers")
+}
+
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   Json     // JSON storage for rich text content
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notes")
 }
 
 enum UserRole {
