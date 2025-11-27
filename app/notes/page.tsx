@@ -140,45 +140,73 @@ export default function NotesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardNav />
+    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50/50 to-blue-50/30 relative">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent pointer-events-none"></div>
+      <div className="relative z-10">
+        <DashboardNav />
 
-      <div className="w-full px-4 sm:px-6 lg:px-16 xl:px-24 py-8 md:py-12 relative">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
-          <div>
-            <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider">Quick Notes</p>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mt-1">Personal Notes Workspace</h1>
-            <p className="text-gray-600 mt-2 text-lg">
-              Capture study ideas, reminders, and insights. Everything stays in your browser.
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 relative">
+        {/* Header Section */}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between mb-8 lg:mb-12">
+          <div className="flex-1">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-100 rounded-full mb-4">
+              <span className="text-xs font-bold text-blue-700 uppercase tracking-wider">Quick Notes</span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-extrabold text-gray-900 mb-3 leading-tight">
+              Personal Notes
+              <span className="block bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Workspace
+              </span>
+            </h1>
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl">
+              Capture study ideas, reminders, and insights. Your notes are synced across all your devices.
             </p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 md:p-6 text-center md:w-72">
-            <p className="text-sm font-semibold text-gray-500">Notes created</p>
-            <p className="text-4xl font-bold text-gray-900 mt-2">{notes.length}</p>
-            <p className="text-xs text-gray-500 mt-1">Stored locally on this device</p>
+          <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 shadow-lg p-5 sm:p-6 lg:p-8 text-center w-full sm:w-auto sm:min-w-[200px] lg:min-w-[240px]">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Total Notes</p>
+            <p className="text-4xl lg:text-5xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-1">
+              {notes.length}
+            </p>
+            <p className="text-xs text-gray-500">Synced & secure</p>
           </div>
         </div>
 
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6 lg:gap-8">
           {/* Composer - full width */}
           <div>
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4">Create a note</h2>
+            <div className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-xl border border-gray-200/50 p-6 sm:p-8 lg:p-10 transition-all hover:shadow-2xl">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Create a New Note</h2>
+              </div>
 
-              <div className="space-y-5">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Title</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2.5">
+                    Title <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g. Organic Chemistry summary"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400"
+                    placeholder="e.g. Organic Chemistry summary, Calculus formulas..."
+                    className="w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 bg-gray-50/50 transition-all hover:border-gray-300"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Content</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2.5">
+                    Content <span className="text-red-500">*</span>
+                  </label>
                   <RichTextEditor
                     content={content}
                     onChange={setContent}
@@ -186,14 +214,14 @@ export default function NotesPage() {
                   />
                 </div>
 
-                <div className="flex justify-end gap-3 pt-3">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => {
                       setTitle('');
                       setContent('');
                     }}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                    className="px-5 py-2.5 border-2 border-gray-300 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all"
                   >
                     Clear
                   </button>
@@ -201,30 +229,51 @@ export default function NotesPage() {
                     type="button"
                     onClick={handleSaveNote}
                     disabled={saving}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold shadow-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl text-sm font-bold shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
                   >
-                    {saving ? 'Saving...' : 'Save Note'}
+                    {saving ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </span>
+                    ) : (
+                      'Save Note'
+                    )}
                   </button>
                 </div>
               </div>
 
-              <p className="text-xs text-gray-500 mt-4">
-                Notes are stored in the database and synced across your devices.
-              </p>
+              <div className="mt-6 pt-6 border-t border-gray-200 flex items-start gap-2">
+                <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  Notes are stored securely in the database and synced across all your devices.
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Notes List - full width below editor */}
-          <div className="space-y-4">
+          <div className="space-y-4 sm:space-y-5">
             {loading ? (
-              <div className="bg-white rounded-2xl border border-dashed border-gray-300 px-8 py-12 text-center text-gray-500 min-h-[50vh] flex items-center justify-center">
-                <p className="text-lg">Loading notes...</p>
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-300 px-8 py-16 sm:py-20 text-center min-h-[50vh] flex flex-col items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mb-4"></div>
+                <p className="text-lg font-medium text-gray-600">Loading your notes...</p>
               </div>
             ) : formattedNotes.length === 0 ? (
-              <div className="bg-white rounded-2xl border border-dashed border-gray-300 px-8 py-12 text-center text-gray-500 min-h-[50vh] flex items-center justify-center">
-                <p className="text-lg max-w-xl">
-                  No notes yet. Start by writing your first one on the left and it will appear here, filling your
-                  notes space.
+              <div className="bg-white/90 backdrop-blur-sm rounded-3xl border-2 border-dashed border-gray-300 px-6 sm:px-12 py-16 sm:py-20 text-center min-h-[50vh] flex flex-col items-center justify-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl flex items-center justify-center mb-6">
+                  <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">No notes yet</h3>
+                <p className="text-base text-gray-600 max-w-md">
+                  Start by creating your first note above. It will appear here with all your other notes.
                 </p>
               </div>
             ) : (
@@ -233,43 +282,52 @@ export default function NotesPage() {
                 return (
                   <div
                     key={note.id}
-                    className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                    className="group bg-white/90 backdrop-blur-sm rounded-3xl border border-gray-200/50 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden"
                   >
-                    <div className="p-6">
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                        <div>
-                          <h3 className="text-xl font-semibold text-gray-900">{note.title}</h3>
-                          <p className="text-sm text-gray-500">Created {note.createdDate}</p>
+                    <div className="p-6 sm:p-8">
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2 break-words">{note.title}</h3>
+                          <div className="flex items-center gap-2 text-sm text-gray-500">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>Created {note.createdDate}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
                           <button
                             onClick={() => handleDeleteNote(note.id)}
-                    className="px-3 py-1.5 text-xs md:text-sm font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                            className="px-4 py-2 text-sm font-semibold text-red-600 border-2 border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all transform hover:scale-105 active:scale-95"
                           >
                             Delete
                           </button>
                           <button
-                            onClick={() =>
-                              setSelectedNoteId(isExpanded ? null : note.id)
-                            }
-                            className="px-3 py-1.5 text-xs md:text-sm font-medium text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                            onClick={() => setSelectedNoteId(isExpanded ? null : note.id)}
+                            className="px-4 py-2 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 shadow-md hover:shadow-lg transition-all transform hover:scale-105 active:scale-95"
                           >
                             {isExpanded ? 'Hide' : 'View'}
                           </button>
                         </div>
                       </div>
 
-                      <div className="mt-4">
+                      <div className="mt-6">
                         <div
-                          className={`prose prose-sm max-w-none text-gray-700 prose-p:text-gray-700 prose-strong:text-gray-900 transition-all ${
+                          className={`prose prose-sm sm:prose-base max-w-none text-gray-700 prose-p:text-gray-700 prose-strong:text-gray-900 prose-headings:text-gray-900 transition-all duration-300 ${
                             isExpanded ? '' : 'line-clamp-4'
                           }`}
                           dangerouslySetInnerHTML={{ __html: note.content }}
                         />
                         {!isExpanded && (
-                          <div className="mt-2 text-sm text-blue-600 font-semibold cursor-pointer" onClick={() => setSelectedNoteId(note.id)}>
-                            Continue reading →
-                          </div>
+                          <button
+                            onClick={() => setSelectedNoteId(note.id)}
+                            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors group"
+                          >
+                            <span>Continue reading</span>
+                            <svg className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                          </button>
                         )}
                       </div>
                     </div>
@@ -282,52 +340,77 @@ export default function NotesPage() {
       </div>
 
       {/* Floating AI Notes Button + Panel */}
-      <div className="fixed bottom-6 right-6 z-40">
+      <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40">
         {/* Toggle Button */}
         <button
           type="button"
           onClick={() => setShowAiPanel((prev) => !prev)}
-          className="flex items-center gap-2 px-4 py-3 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all"
+          className="flex items-center gap-2.5 px-5 py-3.5 rounded-2xl shadow-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white text-sm font-bold hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all transform hover:scale-105 active:scale-95 backdrop-blur-sm"
         >
-          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10 border border-white/20 text-xs">
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-white/20 border border-white/30 text-xs font-extrabold backdrop-blur-sm">
             AI
           </span>
-          <span>Generate notes</span>
+          <span className="hidden sm:inline">Generate notes</span>
         </button>
 
         {/* Slide-up Panel */}
         {showAiPanel && (
-          <div className="mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 p-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-semibold text-gray-900">Generate with AI</h3>
+          <div className="mt-4 w-[calc(100vw-2rem)] sm:w-96 bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border-2 border-gray-200/50 p-5 sm:p-6 animate-in slide-in-from-bottom-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 className="text-base font-bold text-gray-900">AI Note Generator</h3>
+              </div>
               <button
                 type="button"
                 onClick={() => setShowAiPanel(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
               >
-                ✕
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
-            <p className="text-xs text-gray-500 mb-3">
-              Describe what you want (topic, level, style). AI will replace the current content.
+            <p className="text-xs text-gray-600 mb-4 leading-relaxed">
+              Describe what you want (topic, level, style). AI will generate formatted notes and replace the current content.
             </p>
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
-              rows={3}
-              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 resize-none mb-3"
-              placeholder="e.g. Short revision notes for Quantum Physics basics"
+              rows={4}
+              className="w-full text-sm px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 resize-none mb-4 bg-gray-50/50 transition-all hover:border-gray-300"
+              placeholder="e.g. Short revision notes for Quantum Physics basics, Calculus formulas summary..."
             />
             <button
               type="button"
               onClick={handleGenerateAiNote}
-              disabled={aiLoading}
-              className="w-full inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-md hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={aiLoading || !aiPrompt.trim()}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]"
             >
-              {aiLoading ? 'Generating…' : 'Generate notes'}
+              {aiLoading ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Generating…</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                  <span>Generate notes</span>
+                </>
+              )}
             </button>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
