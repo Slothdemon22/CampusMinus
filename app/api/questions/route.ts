@@ -54,17 +54,30 @@ export async function POST(request: NextRequest) {
     let embedding: number[] | null = null;
     try {
       const embeddingText = `${title.trim()} ${description.trim()}`;
-      const embeddingResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/ai/embeddings`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: embeddingText }),
-      });
       
-      if (embeddingResponse.ok) {
-        const embeddingData = await embeddingResponse.json();
-        embedding = embeddingData.embedding;
-      } else {
-        console.warn('Failed to generate embedding, continuing without it');
+      // Call embedding API directly (internal call)
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (apiKey) {
+        const embeddingResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: 'models/text-embedding-004',
+              content: {
+                parts: [{ text: embeddingText }]
+              }
+            }),
+          }
+        );
+        
+        if (embeddingResponse.ok) {
+          const embeddingData = await embeddingResponse.json();
+          embedding = embeddingData.embedding?.values || embeddingData.embedding;
+        } else {
+          console.warn('Failed to generate embedding, continuing without it');
+        }
       }
     } catch (error) {
       console.error('Error generating embedding:', error);
@@ -81,39 +94,65 @@ export async function POST(request: NextRequest) {
         ? Prisma.sql`ARRAY[${Prisma.join(imageList.map((url) => Prisma.sql`${url}`))}]::text[]`
         : Prisma.sql`ARRAY[]::text[]`;
 
-    if (embedding) {
-      // Insert with embedding using raw SQL
-      const embeddingArray = Prisma.sql`ARRAY[${Prisma.join(embedding.map((val) => Prisma.sql`${val}`))}]::real[]`;
-      
-      await prisma.$executeRaw`
-        INSERT INTO questions (id, title, type, description, images, "userId", embedding, "createdAt", "updatedAt")
-        VALUES (
-          ${questionId},
-          ${title.trim()},
-          ${type.trim()},
-          ${description.trim()},
-          ${imagesSql},
-          ${user.id},
-          ${embeddingArray}::vector,
-          NOW(),
-          NOW()
-        )
-      `;
-    } else {
-      // Insert without embedding
-      await prisma.$executeRaw`
-        INSERT INTO questions (id, title, type, description, images, "userId", "createdAt", "updatedAt")
-        VALUES (
-          ${questionId},
-          ${title.trim()},
-          ${type.trim()},
-          ${description.trim()},
-          ${imagesSql},
-          ${user.id},
-          NOW(),
-          NOW()
-        )
-      `;
+    // Try to insert with embedding if available, otherwise insert without it
+    // This handles the case where pgvector extension is not installed
+    try {
+      if (embedding && Array.isArray(embedding) && embedding.length > 0) {
+        // Try to insert with embedding using raw SQL
+        const embeddingArray = Prisma.sql`ARRAY[${Prisma.join(embedding.map((val) => Prisma.sql`${val}`))}]::real[]`;
+        
+        await prisma.$executeRaw`
+          INSERT INTO questions (id, title, type, description, images, "userId", embedding, "createdAt", "updatedAt")
+          VALUES (
+            ${questionId},
+            ${title.trim()},
+            ${type.trim()},
+            ${description.trim()},
+            ${imagesSql},
+            ${user.id},
+            ${embeddingArray}::vector,
+            NOW(),
+            NOW()
+          )
+        `;
+      } else {
+        // No embedding generated, insert without it
+        await prisma.$executeRaw`
+          INSERT INTO questions (id, title, type, description, images, "userId", "createdAt", "updatedAt")
+          VALUES (
+            ${questionId},
+            ${title.trim()},
+            ${type.trim()},
+            ${description.trim()},
+            ${imagesSql},
+            ${user.id},
+            NOW(),
+            NOW()
+          )
+        `;
+      }
+    } catch (error: any) {
+      // If embedding column doesn't exist (pgvector not installed), insert without it
+      const errorMessage = error.message || '';
+      if (errorMessage.includes('embedding') || errorMessage.includes('column') || errorMessage.includes('42703')) {
+        console.warn('Embedding column not available (pgvector may not be installed), inserting without embedding');
+        await prisma.$executeRaw`
+          INSERT INTO questions (id, title, type, description, images, "userId", "createdAt", "updatedAt")
+          VALUES (
+            ${questionId},
+            ${title.trim()},
+            ${type.trim()},
+            ${description.trim()},
+            ${imagesSql},
+            ${user.id},
+            NOW(),
+            NOW()
+          )
+        `;
+      } else {
+        // Re-throw if it's a different error
+        throw error;
+      }
     }
 
     // Fetch the created question with user info

@@ -15,13 +15,13 @@ interface Question {
   type: string;
   description: string;
   images: string[];
-  userId: string;
+  userId: string | null;
   createdAt: string;
   user: {
     id: string;
     name: string | null;
     email: string;
-  };
+  } | null;
 }
 
 export default function QuestionsPage() {
@@ -72,7 +72,7 @@ export default function QuestionsPage() {
     try {
       const { data } = await axios.post('/api/questions/search', {
         query: searchQuery.trim(),
-        limit: 20,
+        limit: 3,
       });
       setQuestions(data.questions || []);
       if (data.questions && data.questions.length > 0) {
@@ -105,21 +105,46 @@ export default function QuestionsPage() {
       <DashboardNav />
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8 md:mb-12">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Community Questions</h1>
-            <p className="text-gray-600 text-lg">Browse questions from the community</p>
+        <div className="mb-8 md:mb-12">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Community Questions</h1>
+              <p className="text-gray-600 text-lg">Browse questions from the community</p>
+            </div>
+            <div className="flex gap-3">
+              {currentUser && (
+                <>
+                  <Link
+                    href="/my-questions"
+                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                  >
+                    My Questions
+                  </Link>
+                  <Link
+                    href="/questions/new"
+                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Ask Question
+                    </span>
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
           
           {/* Search Bar */}
-          <div className="w-full sm:w-auto flex gap-2 mb-4 sm:mb-0">
+          <div className="w-full flex gap-2">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="Search questions by description..."
-              className="flex-1 sm:w-64 px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 bg-white"
+              placeholder="Search questions by description (semantic search)..."
+              className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-900 placeholder:text-gray-400 bg-white"
             />
             <button
               onClick={handleSearch}
@@ -138,29 +163,6 @@ export default function QuestionsPage() {
               >
                 Clear
               </button>
-            )}
-          </div>
-          <div className="flex gap-3">
-            {currentUser && (
-              <>
-                <Link
-                  href="/my-questions"
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
-                >
-                  My Questions
-                </Link>
-                <Link
-                  href="/questions/new"
-                  className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                >
-                  <span className="flex items-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Ask Question
-                  </span>
-                </Link>
-              </>
             )}
           </div>
         </div>
@@ -206,7 +208,7 @@ export default function QuestionsPage() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                           </svg>
-                          {question.user.name || question.user.email.split('@')[0]}
+                          {question.user ? (question.user.name || question.user.email.split('@')[0]) : 'Deleted User'}
                         </span>
                       </div>
                     </div>

@@ -12,13 +12,13 @@ interface Question {
   type: string;
   description: string;
   images: string[];
-  userId: string;
+  userId: string | null;
   createdAt: string;
   user: {
     id: string;
     name: string | null;
     email: string;
-  };
+  } | null;
 }
 
 interface Answer {
@@ -57,12 +57,15 @@ export default function QuestionModal({
   const [answerImageFiles, setAnswerImageFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deletingAnswerId, setDeletingAnswerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
       if (question) {
         fetchAnswers();
+        fetchCurrentUser();
       }
     } else {
       document.body.style.overflow = 'unset';
@@ -71,11 +74,24 @@ export default function QuestionModal({
       setAnswerImages([]);
       setAnswerImageFiles([]);
       setAnswers([]);
+      setIsAdmin(false);
     }
     return () => {
       document.body.style.overflow = 'unset';
     };
   }, [isOpen, question]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const { data } = await axios.get('/api/auth/me');
+      if (data.user && data.user.role === 'ADMIN') {
+        setIsAdmin(true);
+      }
+    } catch (error) {
+      // User not logged in or not admin
+      setIsAdmin(false);
+    }
+  };
 
   const fetchAnswers = async () => {
     if (!question) return;
@@ -104,6 +120,24 @@ export default function QuestionModal({
   const removeAnswerImage = (index: number) => {
     setAnswerImages(answerImages.filter((_, i) => i !== index));
     setAnswerImageFiles(answerImageFiles.filter((_, i) => i !== index));
+  };
+
+  const handleDeleteAnswer = async (answerId: string) => {
+    if (!confirm('Are you sure you want to delete this answer?')) {
+      return;
+    }
+
+    setDeletingAnswerId(answerId);
+    try {
+      await axios.delete(`/api/answers/${answerId}`);
+      toast.success('Answer deleted successfully');
+      // Remove answer from local state
+      setAnswers(answers.filter((a) => a.id !== answerId));
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete answer');
+    } finally {
+      setDeletingAnswerId(null);
+    }
   };
 
   const getPlainText = (html: string) =>
@@ -180,7 +214,7 @@ export default function QuestionModal({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                {question.user.name || question.user.email.split('@')[0]}
+                {question.user ? (question.user.name || question.user.email.split('@')[0]) : 'Deleted User'}
               </span>
             </div>
             <h2 className="text-2xl md:text-3xl font-bold text-gray-900 pr-8">
@@ -353,20 +387,41 @@ export default function QuestionModal({
             ) : (
               answers.map((answer) => (
                 <div key={answer.id} className="bg-white rounded-lg p-4 border border-gray-200">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 font-semibold text-sm">
-                        {(answer.user.name || answer.user.email.split('@')[0])[0].toUpperCase()}
-                      </span>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <span className="text-blue-600 font-semibold text-sm">
+                          {(answer.user.name || answer.user.email.split('@')[0])[0].toUpperCase()}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {answer.user.name || answer.user.email.split('@')[0]}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(answer.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {answer.user.name || answer.user.email.split('@')[0]}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {new Date(answer.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
+                    {isAdmin && (
+                      <button
+                        onClick={() => handleDeleteAnswer(answer.id)}
+                        disabled={deletingAnswerId === answer.id}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title="Delete answer"
+                      >
+                        {deletingAnswerId === answer.id ? (
+                          <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        )}
+                      </button>
+                    )}
                   </div>
                   <div
                     className="text-gray-700 prose prose-sm max-w-none prose-p:text-gray-700 prose-strong:text-gray-900 mb-3"

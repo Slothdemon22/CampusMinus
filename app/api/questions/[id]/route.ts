@@ -36,7 +36,7 @@ export async function GET(
   }
 }
 
-// DELETE - Delete a question (only creator can delete)
+// DELETE - Delete a question (only admin can delete)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -47,6 +47,14 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Only admins can delete questions
+    if (user.role !== 'ADMIN') {
+      return NextResponse.json(
+        { error: 'Only admins can delete questions' },
+        { status: 403 }
+      );
+    }
+
     const { id } = await params;
     const prisma = await getPrismaClient();
     const question = await prisma.question.findUnique({
@@ -55,10 +63,6 @@ export async function DELETE(
 
     if (!question) {
       return NextResponse.json({ error: 'Question not found' }, { status: 404 });
-    }
-
-    if (question.userId !== user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     await prisma.question.delete({

@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import QuestionModal from '@/components/QuestionModal';
 import axios from 'axios';
+import { toast } from 'sonner';
 
 interface Answer {
   id: string;
@@ -24,13 +26,13 @@ interface Question {
   type: string;
   description: string;
   images: string[];
-  userId: string;
+  userId: string | null;
   createdAt: Date;
   user: {
     id: string;
     name: string | null;
     email: string;
-  };
+  } | null;
   _count?: {
     answers: number;
   };
@@ -40,13 +42,17 @@ interface AdminQuestionsClientProps {
   questions: Question[];
 }
 
-export default function AdminQuestionsClient({ questions }: AdminQuestionsClientProps) {
+export default function AdminQuestionsClient({ questions: initialQuestions }: AdminQuestionsClientProps) {
+  const router = useRouter();
+  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [answersExpandedIds, setAnswersExpandedIds] = useState<Set<string>>(new Set());
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [questionAnswers, setQuestionAnswers] = useState<Record<string, Answer[]>>({});
   const [loadingAnswers, setLoadingAnswers] = useState<Record<string, boolean>>({});
+  const [deletingQuestionId, setDeletingQuestionId] = useState<string | null>(null);
+  const [deletingAnswerId, setDeletingAnswerId] = useState<string | null>(null);
 
   const toggleExpand = (id: string) => {
     const newExpanded = new Set(expandedIds);
@@ -88,6 +94,64 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
     setIsModalOpen(true);
   };
 
+  const handleDeleteQuestion = async (questionId: string) => {
+    if (!confirm('Are you sure you want to delete this question? All answers will also be deleted. This action cannot be undone.')) {
+      return;
+    }
+
+    setDeletingQuestionId(questionId);
+    try {
+      await axios.delete(`/api/questions/${questionId}`);
+      toast.success('Question and all its answers deleted successfully');
+      // Remove question from local state
+      setQuestions(questions.filter((q) => q.id !== questionId));
+      // Remove answers from local state if loaded
+      setQuestionAnswers(prev => {
+        const newAnswers = { ...prev };
+        delete newAnswers[questionId];
+        return newAnswers;
+      });
+      // Remove from expanded sets
+      setExpandedIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(questionId);
+        return newSet;
+      });
+      setAnswersExpandedIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(questionId);
+        return newSet;
+      });
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete question');
+    } finally {
+      setDeletingQuestionId(null);
+    }
+  };
+
+  const handleDeleteAnswer = async (answerId: string, questionId: string) => {
+    if (!confirm('Are you sure you want to delete this answer?')) {
+      return;
+    }
+
+    setDeletingAnswerId(answerId);
+    try {
+      await axios.delete(`/api/answers/${answerId}`);
+      toast.success('Answer deleted successfully');
+      // Remove answer from local state
+      setQuestionAnswers(prev => ({
+        ...prev,
+        [questionId]: (prev[questionId] || []).filter((a) => a.id !== answerId),
+      }));
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete answer');
+    } finally {
+      setDeletingAnswerId(null);
+    }
+  };
+
   if (questions.length === 0) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
@@ -115,7 +179,7 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
           return (
             <div
               key={question.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-all"
+              className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all"
             >
               <div className="p-4">
                 <div className="flex items-start justify-between gap-4">
@@ -125,7 +189,7 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
                         {question.type}
                       </span>
                       <span className="text-sm text-gray-600">
-                        {question.user.name || question.user.email}
+                        {question.user ? (question.user.name || question.user.email) : 'Deleted User'}
                       </span>
                       <span className="text-xs text-gray-500">
                         {createdAt.toLocaleDateString()}
@@ -170,7 +234,7 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
                         <div className="mt-6 pt-6 border-t border-gray-200">
                           <button
                             onClick={() => toggleAnswersExpand(question.id)}
-                            className="flex items-center justify-between w-full mb-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                            className="flex items-center justify-between w-full mb-3 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 rounded-xl transition-all shadow-sm hover:shadow-md"
                           >
                             <span className="font-semibold text-gray-900">
                               Answers ({questionAnswers[question.id]?.length ?? question._count?.answers ?? 0})
@@ -197,22 +261,41 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
                                 questionAnswers[question.id]?.map((answer) => (
                                   <div
                                     key={answer.id}
-                                    className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
+                                    className="bg-gray-50 border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all"
                                   >
-                                    <div className="flex items-center gap-2 mb-3">
-                                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                        <span className="text-blue-600 font-semibold text-sm">
-                                          {(answer.user.name || answer.user.email.split('@')[0])[0].toUpperCase()}
-                                        </span>
+                                    <div className="flex items-center justify-between mb-3">
+                                      <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                          <span className="text-blue-600 font-semibold text-sm">
+                                            {(answer.user.name || answer.user.email.split('@')[0])[0].toUpperCase()}
+                                          </span>
+                                        </div>
+                                        <div>
+                                          <p className="text-sm font-medium text-gray-900">
+                                            {answer.user.name || answer.user.email.split('@')[0]}
+                                          </p>
+                                          <p className="text-xs text-gray-500">
+                                            {new Date(answer.createdAt).toLocaleDateString()}
+                                          </p>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900">
-                                          {answer.user.name || answer.user.email.split('@')[0]}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                          {new Date(answer.createdAt).toLocaleDateString()}
-                                        </p>
-                                      </div>
+                                      <button
+                                        onClick={() => handleDeleteAnswer(answer.id, question.id)}
+                                        disabled={deletingAnswerId === answer.id}
+                                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                                        title="Delete answer"
+                                      >
+                                        {deletingAnswerId === answer.id ? (
+                                          <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                          </svg>
+                                        ) : (
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        )}
+                                      </button>
                                     </div>
                                     <div
                                       className="text-gray-700 text-sm mb-3 prose prose-sm max-w-none prose-p:text-gray-700"
@@ -250,20 +333,39 @@ export default function AdminQuestionsClient({ questions }: AdminQuestionsClient
                       />
                     )}
                   </div>
-                  <button
-                    onClick={() => toggleExpand(question.id)}
-                    className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
-                    title={isExpanded ? 'Collapse' : 'Expand'}
-                  >
-                    <svg
-                      className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => handleDeleteQuestion(question.id)}
+                      disabled={deletingQuestionId === question.id}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-110"
+                      title="Delete question"
                     >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
+                      {deletingQuestionId === question.id ? (
+                        <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
+                    </button>
+                    <button
+                      onClick={() => toggleExpand(question.id)}
+                      className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+                      title={isExpanded ? 'Collapse' : 'Expand'}
+                    >
+                      <svg
+                        className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

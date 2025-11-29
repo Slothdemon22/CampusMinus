@@ -43,8 +43,8 @@ model Question {
   description String   @db.Text
   images      String[] // Array of image URLs
   embedding   Unsupported("vector(768)")? // Vector embedding for semantic search (768 dimensions for Gemini)
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   answers     Answer[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

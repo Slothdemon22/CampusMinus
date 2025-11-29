@@ -5,7 +5,7 @@ import { Prisma } from '@prisma/client';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { query, limit = 5 } = body as { query?: string; limit?: number };
+    const { query, limit = 3 } = body as { query?: string; limit?: number };
 
     if (!query || !query.trim()) {
       return NextResponse.json(
@@ -15,13 +15,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate embedding for the search query
-    const embeddingResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/ai/embeddings`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: query.trim() }),
-    });
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: 'AI is not configured. Missing GEMINI_API_KEY.' },
+        { status: 500 }
+      );
+    }
+
+    const embeddingResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'models/text-embedding-004',
+          content: {
+            parts: [{ text: query.trim() }]
+          }
+        }),
+      }
+    );
 
     if (!embeddingResponse.ok) {
+      const errorText = await embeddingResponse.text();
+      console.error('Gemini API error:', errorText);
       return NextResponse.json(
         { error: 'Failed to generate search embedding' },
         { status: 500 }
@@ -29,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     const embeddingData = await embeddingResponse.json();
-    const searchEmbedding = embeddingData.embedding;
+    const searchEmbedding = embeddingData.embedding?.values || embeddingData.embedding;
 
     if (!searchEmbedding || !Array.isArray(searchEmbedding)) {
       return NextResponse.json(
@@ -59,7 +77,7 @@ export async function POST(request: NextRequest) {
         u.email,
         q.embedding <-> ${embeddingArray}::vector as distance
       FROM questions q
-      JOIN users u ON q."userId" = u.id
+      LEFT JOIN users u ON q."userId" = u.id
       WHERE q.embedding IS NOT NULL
       ORDER BY q.embedding <-> ${embeddingArray}::vector
       LIMIT ${limit}
@@ -75,11 +93,11 @@ export async function POST(request: NextRequest) {
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
       distance: parseFloat(row.distance),
-      user: {
+      user: row.user_id ? {
         id: row.user_id,
         name: row.name,
         email: row.email,
-      },
+      } : null,
     }));
 
     return NextResponse.json({ 
@@ -98,4 +116,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
