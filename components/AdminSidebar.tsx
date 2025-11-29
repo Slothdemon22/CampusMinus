@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 
 interface NavItem {
   href: string;
@@ -41,16 +42,45 @@ const navItems: NavItem[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 h-[calc(100vh-4rem)] fixed left-0 top-16 z-10 overflow-y-auto">
-      <nav className="p-4 space-y-2">
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+        className="lg:hidden fixed top-20 left-4 z-[60] p-2 bg-white border border-gray-200 rounded-lg shadow-md hover:bg-gray-50 transition-colors"
+        aria-label="Toggle menu"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          {isMobileMenuOpen ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          )}
+        </svg>
+      </button>
+
+      {/* Mobile Overlay - only on mobile when menu is open */}
+      {isMobileMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-[45]"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`w-64 bg-white border-r border-gray-200 h-[calc(100vh-4rem)] fixed left-0 top-16 z-[50] overflow-y-auto transition-transform duration-300 ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 lg:z-30`}>
+        <nav className="p-4 space-y-2">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
                 isActive
                   ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600'
@@ -66,6 +96,7 @@ export default function AdminSidebar() {
         })}
       </nav>
     </aside>
+    </>
   );
 }
 

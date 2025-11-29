@@ -113,27 +113,32 @@ export async function POST(
     `;
     
     // Fetch the created answer with user info
-    const [createdAnswer] = await prisma.$queryRaw`
+    const results = await prisma.$queryRaw`
       SELECT a.*, u.id as "user_id", u.name, u.email
       FROM answers a
       JOIN users u ON a."userId" = u.id
       WHERE a.id = ${answerId}
     `;
+    const createdAnswer = Array.isArray(results) && results.length > 0 ? (results[0] as any) : null;
+    
+    if (!createdAnswer) {
+      return NextResponse.json({ error: 'Failed to create answer' }, { status: 500 });
+    }
     
     const answer = {
-      id: (createdAnswer as any).id,
-      description: (createdAnswer as any).description,
-      images: Array.isArray((createdAnswer as any).images) 
-        ? (createdAnswer as any).images 
-        : ((createdAnswer as any).images ? JSON.parse((createdAnswer as any).images) : []),
-      userId: (createdAnswer as any).userId,
-      questionId: (createdAnswer as any).questionId,
-      createdAt: (createdAnswer as any).createdAt,
-      updatedAt: (createdAnswer as any).updatedAt,
+      id: createdAnswer.id,
+      description: createdAnswer.description,
+      images: Array.isArray(createdAnswer.images) 
+        ? createdAnswer.images 
+        : (createdAnswer.images ? JSON.parse(createdAnswer.images) : []),
+      userId: createdAnswer.userId,
+      questionId: createdAnswer.questionId,
+      createdAt: createdAnswer.createdAt,
+      updatedAt: createdAnswer.updatedAt,
       user: {
-        id: (createdAnswer as any).user_id,
-        name: (createdAnswer as any).name,
-        email: (createdAnswer as any).email,
+        id: createdAnswer.user_id,
+        name: createdAnswer.name,
+        email: createdAnswer.email,
       },
     };
 

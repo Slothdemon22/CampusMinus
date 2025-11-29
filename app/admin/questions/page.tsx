@@ -36,11 +36,11 @@ export default async function AdminQuestionsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       <AdminSidebar />
       
-      <div className="ml-64 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="lg:ml-64 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 relative z-10">
         <div className="mb-8 md:mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">All Questions</h1>
           <p className="text-gray-600 text-lg">Monitor and manage all questions from students</p>

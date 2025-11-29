@@ -51,7 +51,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-2xl p-8 border border-gray-100 backdrop-blur-sm">
           <div className="text-center mb-8">
@@ -118,13 +118,23 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign up
+          <div className="mt-6 space-y-3">
+            <div className="text-center">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Forgot your password?
               </Link>
-            </p>
+            </div>
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium">
+                  Sign up
+                </Link>
+              </p>
+            </div>
           </div>
 
           <div className="mt-4 text-center">

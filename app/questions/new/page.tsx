@@ -167,16 +167,16 @@ export default function NewQuestionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">Post a Question</h1>
-          <p className="text-gray-600 mt-2">Share your question with the community</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 break-words">Post a Question</h1>
+          <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Share your question with the community</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-8 border border-gray-200 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm p-4 sm:p-6 md:p-8 border border-gray-200 space-y-4 sm:space-y-6">
           <div>
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               Title <span className="text-red-500">*</span>

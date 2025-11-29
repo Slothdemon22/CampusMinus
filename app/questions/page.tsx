@@ -91,7 +91,7 @@ export default function QuestionsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-white">
         <DashboardNav />
         <div className="flex items-center justify-center h-96">
           <div className="text-gray-600">Loading questions...</div>
@@ -101,34 +101,35 @@ export default function QuestionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="mb-8 md:mb-12">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Community Questions</h1>
-              <p className="text-gray-600 text-lg">Browse questions from the community</p>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
+        <div className="mb-6 sm:mb-8 md:mb-12">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 sm:mb-6">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 break-words">Community Questions</h1>
+              <p className="text-sm sm:text-base md:text-lg text-gray-600">Browse questions from the community</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
               {currentUser && (
                 <>
                   <Link
                     href="/my-questions"
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all"
+                    className="flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl text-sm sm:text-base font-semibold hover:bg-gray-50 transition-all text-center"
                   >
                     My Questions
                   </Link>
                   <Link
                     href="/questions/new"
-                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    className="flex-1 sm:flex-none bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-center"
                   >
-                    <span className="flex items-center gap-2">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className="flex items-center justify-center gap-2">
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                       </svg>
-                      Ask Question
+                      <span className="hidden sm:inline">Ask Question</span>
+                      <span className="sm:hidden">Ask</span>
                     </span>
                   </Link>
                 </>
@@ -137,7 +138,7 @@ export default function QuestionsPage() {
           </div>
           
           {/* Search Bar */}
-          <div className="w-full flex gap-2">
+          <div className="w-full flex flex-col sm:flex-row gap-2">
             <input
               type="text"
               value={searchQuery}

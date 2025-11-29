@@ -12,6 +12,8 @@ interface Note {
   content: string;
   createdAt: string;
   updatedAt: string;
+  shareToken?: string | null;
+  isPublic?: boolean;
 }
 
 const getPlainText = (html: string) =>
@@ -31,6 +33,8 @@ export default function NotesPage() {
   const [showAiPanel, setShowAiPanel] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+  const [shareUrls, setShareUrls] = useState<Record<string, string>>({});
+  const [sharingNoteId, setSharingNoteId] = useState<string | null>(null);
 
   // Fetch notes from API
   useEffect(() => {
@@ -124,9 +128,65 @@ export default function NotesPage() {
       if (selectedNoteId === id) {
         setSelectedNoteId(null);
       }
+      // Remove share URL if exists
+      setShareUrls((prev) => {
+        const newUrls = { ...prev };
+        delete newUrls[id];
+        return newUrls;
+      });
       toast.success('Note deleted');
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to delete note');
+    }
+  };
+
+  const handleShareNote = async (id: string) => {
+    setSharingNoteId(id);
+    try {
+      const { data } = await axios.post(`/api/notes/${id}/share`);
+      const shareUrl = data.shareUrl;
+      setShareUrls((prev) => ({ ...prev, [id]: shareUrl }));
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(shareUrl);
+      toast.success('Share link copied to clipboard!');
+      
+      // Update note in list
+      setNotes((prev) =>
+        prev.map((note) =>
+          note.id === id
+            ? { ...note, shareToken: data.shareToken, isPublic: true }
+            : note
+        )
+      );
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to share note');
+    } finally {
+      setSharingNoteId(null);
+    }
+  };
+
+  const handleStopSharing = async (id: string) => {
+    try {
+      await axios.delete(`/api/notes/${id}/share`);
+      setShareUrls((prev) => {
+        const newUrls = { ...prev };
+        delete newUrls[id];
+        return newUrls;
+      });
+      
+      // Update note in list
+      setNotes((prev) =>
+        prev.map((note) =>
+          note.id === id
+            ? { ...note, shareToken: null, isPublic: false }
+            : note
+        )
+      );
+      
+      toast.success('Sharing disabled');
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to stop sharing');
     }
   };
 
@@ -140,8 +200,7 @@ export default function NotesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white via-gray-50/50 to-blue-50/30 relative">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-100/20 via-transparent to-transparent pointer-events-none"></div>
+    <div className="min-h-screen bg-white relative">
       <div className="relative z-10">
         <DashboardNav />
 
@@ -295,7 +354,58 @@ export default function NotesPage() {
                             <span>Created {note.createdDate}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 flex-wrap justify-end">
+                          {shareUrls[note.id] || note.isPublic ? (
+                            <div className="flex items-center gap-2">
+                              <div className="px-3 py-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                </svg>
+                                Shared
+                              </div>
+                              <button
+                                onClick={() => {
+                                  const url = shareUrls[note.id] || `${window.location.origin}/notes/shared/${note.shareToken}`;
+                                  navigator.clipboard.writeText(url);
+                                  toast.success('Link copied!');
+                                }}
+                                className="px-3 py-2 text-xs font-semibold text-blue-600 border-2 border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-all"
+                                title="Copy share link"
+                              >
+                                Copy Link
+                              </button>
+                              <button
+                                onClick={() => handleStopSharing(note.id)}
+                                className="px-3 py-2 text-xs font-semibold text-gray-600 border-2 border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-all"
+                                title="Stop sharing"
+                              >
+                                Stop Sharing
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => handleShareNote(note.id)}
+                              disabled={sharingNoteId === note.id}
+                              className="px-4 py-2 text-sm font-semibold text-purple-600 border-2 border-purple-200 rounded-xl hover:bg-purple-50 hover:border-purple-300 transition-all transform hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                            >
+                              {sharingNoteId === note.id ? (
+                                <>
+                                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                  </svg>
+                                  Sharing...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                  </svg>
+                                  Share
+                                </>
+                              )}
+                            </button>
+                          )}
                           <button
                             onClick={() => handleDeleteNote(note.id)}
                             className="px-4 py-2 text-sm font-semibold text-red-600 border-2 border-red-200 rounded-xl hover:bg-red-50 hover:border-red-300 transition-all transform hover:scale-105 active:scale-95"

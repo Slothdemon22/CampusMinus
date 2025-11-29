@@ -1,61 +1,37 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getPrismaClient } from '@/lib/prisma';
-import { verifyPassword, generateToken, setAuthToken } from '@/lib/auth';
+import { NextRequest } from 'next/server';
+import { ServiceFactory } from '@/lib/di/ServiceFactory';
+import { ResponseBuilder } from '@/lib/utils/ResponseBuilder';
 
+/**
+ * Login API Route - Refactored to use OOP Service Pattern with Dependency Injection
+ * Uses ServiceFactory to create AuthService with proper dependencies
+ */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
 
+    // Validation
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email and password are required' },
-        { status: 400 }
-      );
+      return ResponseBuilder.error('Email and password are required', 400);
     }
 
-    const prisma = await getPrismaClient();
+    // Use ServiceFactory to create AuthService with dependencies (DIP)
+    const authService = ServiceFactory.createAuthService();
+    const { user, token } = await authService.login(email, password);
 
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email },
+    return ResponseBuilder.success({
+      user: user.toJSON(),
     });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Verify password
-    const isValidPassword = await verifyPassword(password, user.password);
-    if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
-    // Generate token and set cookie
-    const token = generateToken(user.id, user.email, user.role);
-    await setAuthToken(token);
-
-    return NextResponse.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-      },
-    });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    
+    // Handle known errors
+    if (error.message === 'Invalid email or password') {
+      return ResponseBuilder.unauthorized(error.message);
+    }
+
+    return ResponseBuilder.error('Internal server error', 500, error.message);
   }
 }
 

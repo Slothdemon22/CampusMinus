@@ -53,7 +53,7 @@ export default async function StudentDashboard() {
     }
 
     if (prisma && prisma.question) {
-      myQuestions = await prisma.question.findMany({
+      const questions = await prisma.question.findMany({
         where: { userId: user.id },
         orderBy: { createdAt: 'desc' },
         take: 3,
@@ -64,6 +64,10 @@ export default async function StudentDashboard() {
           createdAt: true,
         },
       });
+      myQuestions = questions.map(q => ({
+        ...q,
+        createdAt: q.createdAt.toISOString(),
+      }));
       myQuestionsCount = await prisma.question.count({
         where: { userId: user.id },
       });
@@ -73,20 +77,20 @@ export default async function StudentDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 break-words">
             Welcome back, {user.name || user.email.split('@')[0]}!
           </h1>
-          <p className="text-gray-600">Here's an overview of your progress</p>
+          <p className="text-sm sm:text-base text-gray-600">Here's an overview of your progress</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Link href="/tasks" className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 hover:shadow-md transition-all hover:-translate-y-1">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -214,7 +218,7 @@ export default async function StudentDashboard() {
         </div>
 
         {/* My Questions */}
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">My Questions</h2>

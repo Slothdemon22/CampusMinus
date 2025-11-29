@@ -34,11 +34,11 @@ export default async function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       <AdminSidebar />
       
-      <div className="ml-64 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="lg:ml-64 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative z-10">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>

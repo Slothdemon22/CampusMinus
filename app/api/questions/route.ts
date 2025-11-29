@@ -156,26 +156,31 @@ export async function POST(request: NextRequest) {
     }
 
     // Fetch the created question with user info
-    const [createdQuestion] = await prisma.$queryRaw`
+    const results = await prisma.$queryRaw`
       SELECT q.*, u.id as "user_id", u.name, u.email
       FROM questions q
       JOIN users u ON q."userId" = u.id
       WHERE q.id = ${questionId}
     `;
+    const createdQuestion = Array.isArray(results) && results.length > 0 ? (results[0] as any) : null;
+
+    if (!createdQuestion) {
+      return NextResponse.json({ error: 'Failed to create question' }, { status: 500 });
+    }
 
     const question = {
-      id: (createdQuestion as any).id,
-      title: (createdQuestion as any).title,
-      type: (createdQuestion as any).type,
-      description: (createdQuestion as any).description,
-      images: (createdQuestion as any).images || [],
-      userId: (createdQuestion as any).userId,
-      createdAt: (createdQuestion as any).createdAt,
-      updatedAt: (createdQuestion as any).updatedAt,
+      id: createdQuestion.id,
+      title: createdQuestion.title,
+      type: createdQuestion.type,
+      description: createdQuestion.description,
+      images: createdQuestion.images || [],
+      userId: createdQuestion.userId,
+      createdAt: createdQuestion.createdAt,
+      updatedAt: createdQuestion.updatedAt,
       user: {
-        id: (createdQuestion as any).user_id,
-        name: (createdQuestion as any).name,
-        email: (createdQuestion as any).email,
+        id: createdQuestion.user_id,
+        name: createdQuestion.name,
+        email: createdQuestion.email,
       },
     };
 

@@ -42,6 +42,8 @@ export async function GET(request: NextRequest) {
         content: contentString,
         createdAt: note.createdAt.toISOString(),
         updatedAt: note.updatedAt.toISOString(),
+        shareToken: note.shareToken,
+        isPublic: note.isPublic,
       };
     });
 

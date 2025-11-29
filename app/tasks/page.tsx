@@ -162,34 +162,34 @@ export default function TasksPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-gray-600">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900">My Tasks</h1>
-            <p className="text-gray-600 mt-2">Manage your to-do list and stay organized</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">My Tasks</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1 sm:mt-2">Manage your to-do list and stay organized</p>
           </div>
           <button
             onClick={handleCreate}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-blue-700 transition-colors shadow-md"
           >
             + New Task
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <nav className="flex space-x-8">
+        <div className="mb-4 sm:mb-6 border-b border-gray-200 overflow-x-auto">
+          <nav className="flex space-x-4 sm:space-x-8 min-w-max sm:min-w-0">
             {[
               { id: 'all' as TabType, label: 'All' },
               { id: 'pending' as TabType, label: 'Pending' },
@@ -199,7 +199,7 @@ export default function TasksPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                className={`py-3 sm:py-4 px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap ${
                   activeTab === tab.id
                     ? 'border-blue-600 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -232,7 +232,7 @@ export default function TasksPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {filteredTasks.map((task) => {
               const deadlineDate = task.deadline ? new Date(task.deadline) : null;
               const isOverdue = deadlineDate && deadlineDate < new Date() && !task.completed;

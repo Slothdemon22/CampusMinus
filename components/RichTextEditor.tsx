@@ -14,7 +14,7 @@ interface RichTextEditorProps {
 
 const extensions = [
   StarterKit.configure({
-    codeBlock: true,
+    codeBlock: {},
   }),
 ];
 

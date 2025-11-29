@@ -33,11 +33,11 @@ export default async function AdminStudentsPage() {
   const totalUsers = allUsers.length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-white">
       <DashboardNav />
       <AdminSidebar />
       
-      <div className="ml-64 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="lg:ml-64 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 md:py-12 relative z-10">
         <div className="mb-8 md:mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">User Management</h1>
           <p className="text-gray-600 text-lg">Manage all users, roles, and permissions</p>
@@ -90,12 +90,12 @@ export default async function AdminStudentsPage() {
 
         {/* Users Table */}
         <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-          <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
+          <div className="p-6 border-b border-gray-200 bg-white">
             <h2 className="text-2xl font-bold text-gray-900">All Users</h2>
             <p className="text-gray-600 mt-1">Manage user accounts and roles</p>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full">
+          <div className="overflow-x-auto -mx-4 sm:mx-0">
+            <table className="w-full min-w-[640px] sm:min-w-0">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="text-left py-4 px-6 font-semibold text-gray-700">Name</th>
